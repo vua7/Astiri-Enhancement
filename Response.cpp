@@ -1,7 +1,8 @@
+#include <chrono>
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <chrono>
 #include "Request.hpp"
 
 using namespace std;
@@ -51,32 +52,52 @@ public:
     }
 
     /**
-     * Calculates and prints the mean response time of each URI
+     * Calculates and returns the mean response time for each URI
      */
-    void getMean() {
+    auto getMean(const std::string& uri) {
         int mean1 = 0, mean2 = 0;
         long long unsigned int i;
-
-        // first URI mean response time
-        for (i = 0; i < m_uri1.size(); i++) {
-            mean1 += m_uri1.at(i).count();
-        }
-        mean1 /= m_uri1.size();
-        std::cout << "Mean response time for URI 1: " << mean1 << " ms\n";
         
-        // second URI mean response time
-        for (i = 0; i < m_uri2.size(); i++) {
-            mean2 += m_uri2.at(i).count();
+        if (uri.compare("uri1") == 0) {
+            // first URI mean response time
+            for (i = 0; i < m_uri1.size(); i++) {
+                mean1 += m_uri1.at(i).count();
+            }
+            mean1 /= m_uri1.size();
+            return mean1;
         }
-        mean2 /= m_uri2.size();
-        std::cout << "Mean response time for URI 2: " << mean2 << " ms\n";
+        else if (uri.compare("uri2") == 0) {
+            // second URI mean response time
+            for (i = 0; i < m_uri2.size(); i++) {
+                mean2 += m_uri2.at(i).count();
+            }
+            mean2 /= m_uri2.size();
+            return mean2;
+        }
+        return 0;
     }
 
     /**
-     *
+     * Calculates and returns the standard deviation of the response
+     * time for each URI.
      */
-    void getStandardDeviation() {
-    
+    auto getStandardDeviation(const std::string& uri, int size) {
+        float temp, standardDeviation;
+        
+        auto mean = getMean(uri);
+        
+        if (uri.compare("uri1") == 0) {
+            for (int i = 0; i < size; i++) {
+                temp += pow((m_uri1.at(i).count() - mean), 2);
+            }
+        } 
+        else if (uri.compare("uri2") == 0) {
+            for (int i = 0; i < size; i++) {
+                temp += pow((m_uri2.at(i).count() - mean), 2);
+            }
+        }
+        standardDeviation = sqrt(temp / size);
+        return standardDeviation;
     }
 
     /**
@@ -123,7 +144,16 @@ int main(int argc, char *argv[]) {
     }
     
     // get mean response times for each URI
-    obj.getMean();
+    auto mean1 = obj.getMean(argv[1]);
+    std::cout << "Mean response time for URI 1: " << mean1 << " ms\n";
+    auto mean2 = obj.getMean(argv[3]);
+    std::cout << "Mean response time for URI 2: " << mean2 << " ms\n";
+
+    // get standard deviation of response times for each URI
+    auto standardDeviation1 = obj.getStandardDeviation(argv[1], iter1);
+    std::cout << "Standard deviation of response times for URI 1: " << standardDeviation1 << " ms\n";
+    auto standardDeviation2 = obj.getStandardDeviation(argv[3], iter2);
+    std::cout << "Standard deviation of response times for URI 2: " << standardDeviation2 << " ms\n";
 
     return 0;
 }
