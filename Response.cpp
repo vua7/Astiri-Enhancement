@@ -51,16 +51,31 @@ public:
     }
 
     /**
-     * 
+     * Calculates and prints the mean response time of each URI
      */
-    float getMean() {
-    
+    void getMean() {
+        int mean1 = 0, mean2 = 0;
+        long long unsigned int i;
+
+        // first URI mean response time
+        for (i = 0; i < m_uri1.size(); i++) {
+            mean1 += m_uri1.at(i).count();
+        }
+        mean1 /= m_uri1.size();
+        std::cout << "Mean response time for URI 1: " << mean1 << " ms\n";
+        
+        // second URI mean response time
+        for (i = 0; i < m_uri2.size(); i++) {
+            mean2 += m_uri2.at(i).count();
+        }
+        mean2 /= m_uri2.size();
+        std::cout << "Mean response time for URI 2: " << mean2 << " ms\n";
     }
 
     /**
      *
      */
-    float getStandardDeviation() {
+    void getStandardDeviation() {
     
     }
 
@@ -73,7 +88,11 @@ public:
 };
 
 /**
+ * Instantiates object of child class and has object call class methods to
+ * execute several functions such as getting mean response times, standard
+ * deviation of response times, and normalized histogram of response times.
  *
+ * @param [in] URIs and the number of times to request for each URI
  */
 int main(int argc, char *argv[]) {
     int iter1, iter2;
@@ -103,5 +122,8 @@ int main(int argc, char *argv[]) {
         obj.capture(argv[3], chrono::duration_cast<chrono::milliseconds>(end - start));
     }
     
+    // get mean response times for each URI
+    obj.getMean();
+
     return 0;
 }
