@@ -11,6 +11,12 @@
 
 using namespace std;
 
+void usage() {
+    std::cerr << "Program usage: ./Response [max number of bins in histogram]" 
+        << " [URI] [number of URI requests]";
+    exit(EXIT_FAILURE);
+}
+
 /**
  * Derived child class of Request parent class
  *
@@ -167,28 +173,45 @@ public:
 int main(int argc, char *argv[]) {
     int maxBins, size;
 
-    // Check for correct program usage
+    // Check for correct number of command-line arguments
+    if (argc != 4) {
+        usage();
+    }
 
     // Object instaniation
     DerivedRequest obj = DerivedRequest();
     
     // Convert command-line argument to integer
-    std::istringstream iss1(argv[1]);
-    iss1 >> maxBins;
+    try {
+        std::istringstream iss1(argv[1]);
+        iss1 >> maxBins;
+    } catch(...) {
+        usage();
+    }
+    
     // Store number of specified bins
     obj.setBins(maxBins);
 
     // Convert command-line argument to integer
-    std::istringstream iss2(argv[3]);
-    iss2 >> size;
-    // Process URI
-    for (int i = 0; i < size; i++) {
-        auto start = chrono::steady_clock::now();
-        obj.process(argv[2]);
-        auto end = chrono::steady_clock::now();
-        obj.capture(argv[2], chrono::duration_cast<chrono::milliseconds>(end - start));
+    try {
+        std::istringstream iss2(argv[3]);
+        iss2 >> size;
+    } catch(...) {
+        usage();
     }
     
+    // Process URI
+    try {
+        for (int i = 0; i < size; i++) {
+            auto start = chrono::steady_clock::now();
+            obj.process(argv[2]);
+            auto end = chrono::steady_clock::now();
+            obj.capture(argv[2], chrono::duration_cast<chrono::milliseconds>(end - start));
+        }
+    } catch(...) {
+        usage();
+    }
+
     // Get mean response time for URI
     auto mean = obj.getMean(size);
     std::cout << "Mean response time for URI: " << mean << " ms\n";
