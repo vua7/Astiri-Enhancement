@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -16,8 +17,8 @@ using namespace std;
 class DerivedRequest: public Request
 {
 private:
-    vector<std::chrono::milliseconds> m_uri1;
-    vector<std::chrono::milliseconds> m_uri2;
+    vector<std::chrono::milliseconds> m_uri;
+    int m_bins;
 
 protected:
     /**
@@ -36,124 +37,112 @@ protected:
 
 public:
     /**
-     *
+     * Stores the command-line specified number of bins into member variable
      */
-    void capture(const std::string& uri, std::chrono::milliseconds time) {
-        // determine which URI was specified
-        if (uri.compare("uri1") == 0) {
-            m_uri1.push_back(time);
-        }
-        else if (uri.compare("uri2") == 0) {
-            m_uri2.push_back(time);
-        }
-        else {
-            cerr << "Invalid URI\n";
-        }	
+    void setBins(int bins) {
+        m_bins = bins;
     }
 
     /**
-     * Calculates and returns the mean response time for each URI
+     * Stores the captured response data into member data structure
      */
-    auto getMean(const std::string& uri) {
-        int mean1 = 0, mean2 = 0;
-        long long unsigned int i;
+    void capture(const std::string& uri, std::chrono::milliseconds time) {
+        m_uri.push_back(time);	
+    }
+
+    /**
+     * Calculates and returns the mean response time for the URI
+     */
+    auto getMean(int size) {
+        int mean = 0;
         
-        if (uri.compare("uri1") == 0) {
-            // first URI mean response time
-            for (i = 0; i < m_uri1.size(); i++) {
-                mean1 += m_uri1.at(i).count();
-            }
-            mean1 /= m_uri1.size();
-            return mean1;
+        // URI mean response time
+        for (int i = 0; i < size; i++) {
+            mean += m_uri.at(i).count();
         }
-        else if (uri.compare("uri2") == 0) {
-            // second URI mean response time
-            for (i = 0; i < m_uri2.size(); i++) {
-                mean2 += m_uri2.at(i).count();
-            }
-            mean2 /= m_uri2.size();
-            return mean2;
-        }
-        return 0;
+        mean /= size;
+        return mean;
     }
 
     /**
      * Calculates and returns the standard deviation of the response
-     * time for each URI.
+     * time for the URI.
      */
-    auto getStandardDeviation(const std::string& uri, int size) {
+    auto getStandardDeviation(int size) {
         float temp, standardDeviation;
         
-        auto mean = getMean(uri);
+        // get mean by calling child class method 
+        auto mean = getMean(size);
         
-        if (uri.compare("uri1") == 0) {
-            for (int i = 0; i < size; i++) {
-                temp += pow((m_uri1.at(i).count() - mean), 2);
-            }
-        } 
-        else if (uri.compare("uri2") == 0) {
-            for (int i = 0; i < size; i++) {
-                temp += pow((m_uri2.at(i).count() - mean), 2);
-            }
+        // URI standard deviation
+        for (int i = 0; i < size; i++) {
+            temp += pow((m_uri.at(i).count() - mean), 2);
         }
         standardDeviation = sqrt(temp / size);
         return standardDeviation;
     }
 
     /**
-     * 
+     * Builds and returns the normalized histogram of the response
+     * times for the URI
      */
-    void getHistogram() {
-    
+    auto getHistogram(int size) {
+       int min = 0, max, perBin;
+       
+       
+
+
+       perBin = max / m_bins;
+       cout << perBin << "\n";
+       
+       return 0;
     }
 };
 
 /**
  * Instantiates object of child class and has object call class methods to
- * execute several functions such as getting mean response times, standard
+ * execute several functions such as getting mean response time, standard
  * deviation of response times, and normalized histogram of response times.
  *
- * @param [in] URIs and the number of times to request for each URI
+ * @param [in] number of bins, URI, and the number of times to request for URI
  */
 int main(int argc, char *argv[]) {
-    int iter1, iter2;
+    int bins, size;
+
+    // check for correct program usage
 
     // object instaniation
-    DerivedRequest obj = DerivedRequest();    
+    DerivedRequest obj = DerivedRequest();
     
     // convert command-line argument to integer
-    std::istringstream iss1(argv[2]);
-    iss1 >> iter1;
-    // process first URI
-    for (int i = 0; i < iter1; i++) {
-        auto start = chrono::steady_clock::now();
-        obj.process(argv[1]);
-        auto end = chrono::steady_clock::now();
-        obj.capture(argv[1], chrono::duration_cast<chrono::milliseconds>(end - start));
-    }
+    std::istringstream iss1(argv[1]);
+    iss1 >> bins;
+    // store number of specified bins
+    obj.setBins(bins);
 
     // convert command-line argument to integer
-    std::istringstream iss2(argv[4]);
-    iss2 >> iter2;
-    // process second URI
-    for (int j = 0; j < iter2; j++) {
+    std::istringstream iss2(argv[3]);
+    iss2 >> size;
+    // process URI
+    for (int i = 0; i < size; i++) {
         auto start = chrono::steady_clock::now();
-        obj.process(argv[3]);
+        obj.process(argv[2]);
         auto end = chrono::steady_clock::now();
-        obj.capture(argv[3], chrono::duration_cast<chrono::milliseconds>(end - start));
+        obj.capture(argv[2], chrono::duration_cast<chrono::milliseconds>(end - start));
     }
     
-    // get mean response times for each URI
-    auto mean1 = obj.getMean(argv[1]);
-    std::cout << "Mean response time for URI 1: " << mean1 << " ms\n";
-    auto mean2 = obj.getMean(argv[3]);
-    std::cout << "Mean response time for URI 2: " << mean2 << " ms\n";
+    // get mean response time for URI
+    auto mean = obj.getMean(size);
+    std::cout << "Mean response time for URI: " << mean << " ms\n";
 
-    // get standard deviation of response times for each URI
-    auto standardDeviation1 = obj.getStandardDeviation(argv[1], iter1);
-    std::cout << "Standard deviation of response times for URI 1: " << standardDeviation1 << " ms\n";
-    auto standardDeviation2 = obj.getStandardDeviation(argv[3], iter2);
-    std::cout << "Standard deviation of response times for URI 2: " << standardDeviation2 << " ms\n";
+    // get standard deviation of response times for URI
+    auto standardDeviation = obj.getStandardDeviation(size);
+    std::cout << "Standard deviation of response times for URI: " << standardDeviation << " ms\n";
+    
+    // get normalized histogram of response times for URI
+    auto histogram = obj.getHistogram(size);
+
+    
 
     return 0;
 }
