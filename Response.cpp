@@ -11,6 +11,10 @@
 
 using namespace std;
 
+/**
+ * Usage message to display in the event the program is run without correct
+ * command-line arguments.
+ */
 void usage() {
     std::cerr << "Program usage: ./Response [max number of bins in histogram]" 
         << " [URI] [number of URI requests]";
